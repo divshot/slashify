@@ -48,6 +48,48 @@ describe.only('remove trailing slash middleware', function() {
       });
   });
   
+  it('handles custom directory index file names', function (done) {
+    fs.mkdirpSync('.tmp/about');
+    fs.writeFileSync('.tmp/about/custom.html', 'index');
+    
+    var app = connect()
+      .use(slashify({
+        root: '.tmp',
+        index: 'custom.html'
+      }));
+    
+    request(app)
+      .get('/about/')
+      .expect(404)
+      .expect(function (data) {
+        expect(data.req.path).to.equal('/about/');
+      })
+      .end(function (err) {
+        fs.removeSync('.tmp');
+        done(err);
+      });
+  });
+  
+  it('ignores the directory index rule', function (done) {
+    fs.mkdirpSync('.tmp/about');
+    fs.writeFileSync('.tmp/about/index.html', 'index');
+    
+    var app = connect()
+      .use(slashify({
+        root: '.tmp',
+        directory: false
+      }));
+    
+    request(app)
+      .get('/about/')
+      .expect(301)
+      .expect('Location', '/about')
+      .end(function (err) {
+        fs.removeSync('.tmp');
+        done(err);
+      });
+  });
+  
   it('redirects directory index to have a trailing slash', function (done) {
     fs.mkdirpSync('.tmp/about');
     fs.writeFileSync('.tmp/about/index.html', 'index');
@@ -80,4 +122,24 @@ describe.only('remove trailing slash middleware', function() {
       .expect('Location', '/contact?query=param')
       .end(done);
   });
+  
+  it('overrides the file exists method with a custom method', function (done) {
+      fs.mkdirpSync('.tmp');
+      fs.writeFileSync('.tmp/test.html', 'test');
+      
+      var app = connect()
+        .use(slashify({
+          exists: function () {
+            return false
+          }
+        }));
+      
+      request(app)
+        .get('/.tmp/test.html')
+        .expect(404)
+        .end(function (err) {
+          fs.removeSync('.tmp');
+          done(err);
+        });
+    });
 });
