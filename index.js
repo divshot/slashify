@@ -15,9 +15,18 @@ module.exports = function (options) {
   return function (req, res, next) {
     var pathname = url.parse(req.url).pathname;
     
-    if (leaveOnDirectory && isDirectoryIndex() && !hasTrailingSlash()) return redirect(join(pathname, '/')); // Don't remove tailing slash on directory index file
-    if (leaveOnDirectory && isDirectoryIndex()) return next();
-    if (pathname !== '/' && hasTrailingSlash()) return redirect(pathname.substring(0, pathname.length - 1));
+    // Don't remove tailing slash on directory index file
+    if (leaveOnDirectory && isDirectoryIndex() && !hasTrailingSlash()) {
+      return redirect(join(pathname, '/')); 
+    }
+    
+    if (leaveOnDirectory && isDirectoryIndex()) {
+      return next();
+    }
+    
+    if (pathname !== '/' && hasTrailingSlash()) {
+      return redirect(pathname.substring(0, pathname.length - 1));
+    }
     
     // no redirect needed
     next();
@@ -31,7 +40,7 @@ module.exports = function (options) {
     }
     
     function isDirectoryIndex () {
-      return fileExists(join(root, req.url, indexFile));
+      return fileExists(join(root, req.url.split('?')[0], indexFile));
     }
     
     function hasTrailingSlash () {

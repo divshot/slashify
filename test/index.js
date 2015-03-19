@@ -5,7 +5,7 @@ var request = require('supertest');
 var query = require('connect-query');
 var fs = require('fs-extra');
 
-describe.only('remove trailing slash middleware', function() {
+describe('remove trailing slash middleware', function() {
   it('removes the trailing slash for a given url', function (done) {
     var app = connect()
       .use(slashify());
@@ -121,6 +121,28 @@ describe.only('remove trailing slash middleware', function() {
       .expect(301)
       .expect('Location', '/contact?query=param')
       .end(done);
+  });
+  
+  it('preserves query parameters and slash on subdirectory directory index redirect', function (done) {
+    fs.mkdirpSync('.tmp/about');
+    fs.writeFileSync('.tmp/about/index.html', 'index');
+    
+    var app = connect()
+      .use(query())
+      .use(slashify({
+        root: '.tmp'
+      }));
+    
+    request(app)
+      .get('/about?query=params')
+      .expect(function (req) {
+        expect(req.headers.location).to.equal('/about/?query=params');
+      })
+      .expect(301)
+      .end(function (err) {
+        fs.removeSync('.tmp');
+        done(err);
+      });
   });
   
   it('overrides the file exists method with a custom method', function (done) {
