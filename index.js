@@ -33,7 +33,9 @@ module.exports = function (options) {
     
     function redirect (redirectUrl) {
       var query = qs.stringify(req.query);
-      
+
+      if (redirectUrl.includes('//')) return next()
+
       redirectUrl += (query) ? '?' + query : '';
       res.writeHead(301, {Location: redirectUrl});
       res.end();
